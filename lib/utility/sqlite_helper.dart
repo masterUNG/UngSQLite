@@ -65,4 +65,16 @@ class SQLiteHelper {
       print('e of Delete ==>> ${e.toString()}');
     }
   }
+
+  Future<void> updateSQLiteWhereId(TodoModel model) async {
+    print('id ===>>> ${model.id}, ToDo new ====>>> ${model.todo}');
+    Database database =
+        await openDatabase(join(await getDatabasesPath(), nameDatabase));
+    try {
+      await database.update(nameTable, model.toMap(),
+          where: '$columnId = ${model.id}');
+    } catch (e) {
+      print('e edit ==>> ${e.toString()}');
+    }
+  }
 }

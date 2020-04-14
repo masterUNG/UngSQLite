@@ -9,8 +9,10 @@ class LearnSqlite extends StatefulWidget {
 
 class _LearnSqliteState extends State<LearnSqlite> {
   // Field
-  String todo;
+  String todo, todoNew;
   List<TodoModel> todoModels = List();
+  TextEditingController textController = TextEditingController();
+  TextEditingController editController = TextEditingController();
 
   // Method
 
@@ -57,7 +59,9 @@ class _LearnSqliteState extends State<LearnSqlite> {
           if (todo == null || todo.isEmpty) {
             print('Have Space');
           } else {
-            TodoModel model = TodoModel( null,todo);
+            TodoModel model = TodoModel(null, todo);
+            textController.clear();
+            todo = null;
             setState(() {
               SQLiteHelper().insertValueToSQLite(model);
               readSQLite();
@@ -71,6 +75,7 @@ class _LearnSqliteState extends State<LearnSqlite> {
         child: Container(
           // width: 100.0,
           child: TextField(
+            controller: textController,
             onChanged: (String string) {
               todo = string.trim();
             },
@@ -98,20 +103,63 @@ class _LearnSqliteState extends State<LearnSqlite> {
 
   Widget showContent(int index) => ListTile(
         title: Text('${todoModels[index].id}  ${todoModels[index].todo}'),
-        trailing: deleteButton(index),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            editButton(index),
+            deleteButton(index),
+          ],
+        ),
       );
+
+  IconButton editButton(int index) => IconButton(
+      icon: Icon(
+        Icons.build,
+        color: Colors.green,
+      ),
+      onPressed: () {
+        editController.text = todoModels[index].todo;
+        editDialog(index);
+      });
+
+  Future<void> editDialog(int index) async {
+    showDialog(
+      context: context,
+      builder: (value) => AlertDialog(
+        title: Text('Edit ToDo ?'),
+        content: TextField(onChanged: (value)=>todoNew = value.trim(),
+          controller: editController,
+        ),
+        actions: <Widget>[
+          FlatButton(onPressed: () {
+            TodoModel model = TodoModel(todoModels[index].id, todoNew);
+            SQLiteHelper().updateSQLiteWhereId(model);
+            setState(() {
+              readSQLite();
+            });
+            Navigator.of(context).pop();
+          }, child: Text('Edit')),
+          FlatButton(onPressed: () => Navigator.of(context).pop(), child: Text('Cancel')),
+        ],
+      ),
+    );
+  }
 
   IconButton deleteButton(int index) {
     return IconButton(
-        icon: Icon(Icons.delete),
-        onPressed: () {
-          print('You Click index = $index, id ===>>> ${todoModels[index].id.toString()}');
-          SQLiteHelper().deleteSQLiteWhereId(todoModels[index].id);
-          setState(() {
-            readSQLite();
-          });
-        },
-      );
+      icon: Icon(
+        Icons.delete,
+        color: Colors.red,
+      ),
+      onPressed: () {
+        print(
+            'You Click index = $index, id ===>>> ${todoModels[index].id.toString()}');
+        SQLiteHelper().deleteSQLiteWhereId(todoModels[index].id);
+        setState(() {
+          readSQLite();
+        });
+      },
+    );
   }
 
   @override
